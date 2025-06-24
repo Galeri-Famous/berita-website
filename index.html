@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Website Berita</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+  <div class="max-w-4xl mx-auto py-10 px-4">
+    <h1 class="text-3xl font-bold mb-6">Admin Panel - Tambah Berita</h1>
+
+    <form id="formBerita" enctype="multipart/form-data" class="space-y-4">
+      <input type="text" name="judul" id="judul" placeholder="Judul berita" class="border p-2 w-full" required>
+      <textarea name="konten" id="konten" placeholder="Isi berita" class="border p-2 w-full h-40" required></textarea>
+
+      <input type="file" name="gambar" id="gambar" accept="image/*" class="border p-2 w-full" required>
+      <img id="previewGambar" class="mt-2 rounded shadow max-h-48 hidden"/>
+
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Kirim Berita</button>
+    </form>
+
+    <div class="mt-10">
+      <h2 class="text-xl font-semibold mb-4">Berita Terkirim</h2>
+      <div id="adminBeritaList"></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('gambar').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const img = document.getElementById('previewGambar');
+          img.src = event.target.result;
+          img.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    async function loadAdminBerita() {
+      const res = await fetch('/api/berita');
+      const data = await res.json();
+      const adminList = document.getElementById('adminBeritaList');
+      adminList.innerHTML = '';
+      data.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'p-4 bg-white rounded shadow mb-2';
+        div.innerHTML = `
+          <h3 class="font-bold text-lg">${item.judul}</h3>
+          <img src="${item.imageUrl}" class="w-full h-40 object-cover mt-2 rounded"/>
+          <p class="text-gray-600 mt-2">${item.konten.slice(0, 100)}...</p>
+        `;
+        adminList.appendChild(div);
+      });
+    }
+
+    const formBerita = document.getElementById('formBerita');
+    formBerita.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const formData = new FormData(formBerita);
+      const res = await fetch('/api/berita', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Berita berhasil dikirim!');
+        formBerita.reset();
+        document.getElementById('previewGambar').classList.add('hidden');
+        loadAdminBerita();
+      }
+    });
+
+    loadAdminBerita();
+  </script>
+</body>
+</html>
